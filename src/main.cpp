@@ -285,8 +285,6 @@ int main(void)
 
 	Camera camera(window_width, window_height, glm::vec3(0.0f, 1.0f, 4.0f));
 
-	//float rotation = 1.0f;
-
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -295,11 +293,35 @@ int main(void)
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
 
-	Mesh target = cube;
-	//float newColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-	float newPos[3] = {0.0f, 0.0f, 0.0f};
+	Mesh *target = &cube;
+	float newPos[] = {0.0f, 0.0f, 0.0f};
 	float newRotation = 0.0f;
-	float rotationAxis[3] = {0.0f, 1.0f, 0.0f};
+	float rotationAxis[] = {0.0f, 0.0f, 0.0f};
+	int targetID = 0;
+	int prevID = 0;
+
+	const char *object_names[] = 
+	{
+		"Cube",
+		"roof",
+		"left wall", 
+		"right wall",
+		"back wall",
+		"floor",
+		"long cube",
+		"blue light",
+		"red light",
+		"green light"
+	};
+
+	target = &(objects[targetID]);
+	newRotation = target->model.rotationDeg;
+	for (int i = 0; i < 3; i++)
+		newPos[i] = target->model.position[i];
+	for (int i = 0; i < 3; i++)
+		rotationAxis[i] = target->model.rotationAxis[i];
+	//newPos = {target->model.position.x, target->model.position.y, target->model.position.z};
+	//rotationAxis = {target->model.rotationAxis.x, target->model.rotationAxis.y, target->model.rotationAxis.z};
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -322,19 +344,43 @@ int main(void)
 		for(int i = 0; i < objectCount; i++)
 			objects[i].Draw(camera);
 
-
 		ImGui::Begin("window");
+		ImGui::Combo("Id", &targetID, object_names, IM_ARRAYSIZE(object_names));
+
+		target = &(objects[targetID]);
+		//newRotation = target->model.rotationDeg;
+		//newPos = glm::value_ptr(target->model.position);
+		//rotationAxis = glm::value_ptr(target->model.rotationAxis);
+
 		ImGui::SliderFloat("Rotation", &newRotation, 0.0f, 360.0f);
 		ImGui::SliderFloat3("Axis", rotationAxis, 0.0f, 1.0f);
 		ImGui::SliderFloat3("Position", newPos, -2.0f, 2.0f);
 		ImGui::End();
 
-		target.shader.Activate();
-		target.model.model = glm::translate(glm::vec3(newPos[0], newPos[1], newPos[2]));
-		target.model.model = glm::rotate(target.model.model, glm::radians(newRotation), glm::vec3(rotationAxis[0], rotationAxis[1], rotationAxis[2]));
-		glUniformMatrix4fv(glGetUniformLocation(target.shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(target.model.model));
+		if (targetID != prevID)
+		{
+			prevID = targetID;
+			newRotation = target->model.rotationDeg;
+			for (int i = 0; i < 3; i++)
+				newPos[i] = target->model.position[i];
+			for (int i = 0; i < 3; i++)
+				rotationAxis[i] = target->model.rotationAxis[i];
+			//newPos = {target->model.position.x, target->model.position.y, target->model.position.z};
+			//rotationAxis = {target->model.rotationAxis.x, target->model.rotationAxis.y, target->model.rotationAxis.z};
+			
+		}
+		else
+		{
+			target->shader.Activate();
+			target->model.Translate(glm::make_vec3(newPos));
+			target->model.Rotate(newRotation, glm::make_vec3(rotationAxis));
+		
+			//target->model.model = glm::translate(glm::vec3(newPos[0], newPos[1], newPos[2]));
+			//target->model.model = glm::rotate(target->model.model, glm::radians(newRotation), glm::vec3(rotationAxis[0], rotationAxis[1], rotationAxis[2]));
+			glUniformMatrix4fv(glGetUniformLocation(target->shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(target->model.model));
+		}
 
-		//recolorTarget.shader.ChangeColor(glm::vec4(newColor[0] / 255, newColor[1] / 255, newColor[2] / 255, newColor[3] / 255));
+		//recolortarget->shader.ChangeColor(glm::vec4(newColor[0] / 255, newColor[1] / 255, newColor[2] / 255, newColor[3] / 255));
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

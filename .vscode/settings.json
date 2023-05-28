@@ -53,5 +53,6 @@
         "typeinfo": "cpp"
     },
     "cmake.configureOnOpen": false,
-    "cmake.sourceDirectory": "/home/bonk/Documents/projects/cpp/sem_04_opengl/glm"
+    "cmake.sourceDirectory": "/home/bonk/Documents/projects/cpp/sem_04_opengl/glm",
+    "C_Cpp.errorSquiggles": "disabled"
 }
